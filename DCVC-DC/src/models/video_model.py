@@ -614,6 +614,7 @@ class DMC(CompressionModel):
                 "bpp_z": bpp_z,
                 "bpp": bpp,
                 "dpb": {
+                    # reference frame is now the current frame
                     "ref_frame": x_hat,
                     "ref_feature": feature,
                     "ref_mv_feature": mv_feature,

@@ -1,0 +1,84 @@
+{
+  "HEVC_B": {
+    "BQTerrace_1920x1024_60": {
+      "000": {
+        "zero_one": false,
+        "frame_pixel_num": 1966080,
+        "i_frame_num": 48,
+        "p_frame_num": 48,
+        "ave_i_frame_bpp": 0.288557,
+        "ave_i_frame_psnr": 31.578835,
+        "ave_i_frame_msssim": 0.000000,
+        "test_time": 172.639593,
+        "ave_p_frame_bpp": 0.232319,
+        "ave_p_frame_psnr": 32.793306,
+        "ave_p_frame_msssim": 0.000000,
+        "ave_all_frame_bpp": 0.260438,
+        "ave_all_frame_psnr": 32.186071,
+        "ave_all_frame_msssim": 0.000000,
+        "ds_name": "HEVC_B",
+        "video_path": "BQTerrace_1920x1024_60",
+        "rate_idx": 0
+      },
+      "001": {
+        "zero_one": false,
+        "frame_pixel_num": 1966080,
+        "i_frame_num": 48,
+        "p_frame_num": 48,
+        "ave_i_frame_bpp": 1.060441,
+        "ave_i_frame_psnr": 36.059040,
+        "ave_i_frame_msssim": 0.000000,
+        "test_time": 151.658743,
+        "ave_p_frame_bpp": 0.467666,
+        "ave_p_frame_psnr": 34.504151,
+        "ave_p_frame_msssim": 0.000000,
+        "ave_all_frame_bpp": 0.764054,
+        "ave_all_frame_psnr": 35.281595,
+        "ave_all_frame_msssim": 0.000000,
+        "ds_name": "HEVC_B",
+        "video_path": "BQTerrace_1920x1024_60",
+        "rate_idx": 1
+      }
+    },
+    "BasketballDrive_1920x1024_50": {
+      "000": {
+        "zero_one": false,
+        "frame_pixel_num": 1966080,
+        "i_frame_num": 48,
+        "p_frame_num": 48,
+        "ave_i_frame_bpp": 0.093812,
+        "ave_i_frame_psnr": 34.931440,
+        "ave_i_frame_msssim": 0.000000,
+        "test_time": 153.263493,
+        "ave_p_frame_bpp": 0.079209,
+        "ave_p_frame_psnr": 35.165123,
+        "ave_p_frame_msssim": 0.000000,
+        "ave_all_frame_bpp": 0.086510,
+        "ave_all_frame_psnr": 35.048282,
+        "ave_all_frame_msssim": 0.000000,
+        "ds_name": "HEVC_B",
+        "video_path": "BasketballDrive_1920x1024_50",
+        "rate_idx": 0
+      },
+      "001": {
+        "zero_one": false,
+        "frame_pixel_num": 1966080,
+        "i_frame_num": 48,
+        "p_frame_num": 48,
+        "ave_i_frame_bpp": 0.350238,
+        "ave_i_frame_psnr": 37.368496,
+        "ave_i_frame_msssim": 0.000000,
+        "test_time": 153.408375,
+        "ave_p_frame_bpp": 0.236172,
+        "ave_p_frame_psnr": 36.834794,
+        "ave_p_frame_msssim": 0.000000,
+        "ave_all_frame_bpp": 0.293205,
+        "ave_all_frame_psnr": 37.101645,
+        "ave_all_frame_msssim": 0.000000,
+        "ds_name": "HEVC_B",
+        "video_path": "BasketballDrive_1920x1024_50",
+        "rate_idx": 1
+      }
+    }
+  }
+}

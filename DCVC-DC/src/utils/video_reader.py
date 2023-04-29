@@ -43,10 +43,11 @@ class VideoReader():
 
 
 class PNGReader(VideoReader):
-    def __init__(self, src_path, width, height, start_num=1):
+    def __init__(self, src_path, width, height, zero_one=True, start_num=1):
         super().__init__(src_path, width, height)
 
         pngs = os.listdir(self.src_path)
+        self.length = 100
         if 'im1.png' in pngs:
             self.padding = 1
         elif 'im00001.png' in pngs:
@@ -55,13 +56,18 @@ class PNGReader(VideoReader):
             raise ValueError('unknown image naming convention; please specify')
         self.current_frame_index = start_num
 
-    def read_one_frame(self, dst_format="rgb"):
+        self.zero_one = zero_one
+
+    def read_one_frame(self, is_i_frame, dst_format="rgb"):
         if self.eof:
             return self._none_exist_frame(dst_format)
 
         png_path = os.path.join(self.src_path,
                                 f"im{str(self.current_frame_index).zfill(self.padding)}.png"
                                 )
+
+        if not is_i_frame:
+            print("curr p frame ", self.current_frame_index)
         if not os.path.exists(png_path):
             self.eof = True
             return self._none_exist_frame(dst_format)
@@ -72,9 +78,55 @@ class PNGReader(VideoReader):
         _, height, width = rgb.shape
         assert height == self.height
         assert width == self.width
+        if is_i_frame and not self.zero_one:
+            self.current_frame_index += 2
+        elif is_i_frame and self.zero_one:
+            self.current_frame_index += 1
+        else:    
+            if not self.zero_one:
+                self.current_frame_index -= 1
+            else:
+                self.current_frame_index += 1
 
-        self.current_frame_index += 1
         return self._get_dst_format(rgb=rgb, src_format='rgb', dst_format=dst_format)
+    
+    # def read_two_frames(self, dst_format="rgb"):
+    #     if self.eof:
+    #         return self._none_exist_frame(dst_format)
+
+    #     png_path = os.path.join(self.src_path,
+    #                             f"im{str(self.current_frame_index).zfill(self.padding)}.png"
+    #                             )
+    #     next_indx = self.current_frame_index + 1 if self.zero_one else self.current_frame_index + 2
+    #     next_img_name = f"im{str(next_indx).zfill(self.padding)}.png"
+    #     next_png_path = os.path.join(self.src_path,next_img_name)
+
+    #     if not os.path.exists(png_path):
+    #         self.eof = True
+    #         return self._none_exist_frame(dst_format)
+
+    #     if not os.path.exists(next_png_path):
+    #         self.eof = True
+    #         return self._none_exist_frame(dst_format)
+
+    #     rgb = Image.open(png_path).convert('RGB')
+    #     rgb = np.asarray(rgb).astype('float32').transpose(2, 0, 1)
+    #     rgb = rgb / 255.
+
+    #     rgb_next = Image.open(next_png_path).convert('RGB')
+    #     rgb_next = np.asarray(rgb_next).astype('float32').transpose(2, 0, 1)
+    #     rgb_next = rgb_next / 255.
+
+    #     _, height, width = rgb.shape
+    #     assert rgb.shape == rgb_next.shape
+    #     assert height == self.height
+    #     assert width == self.width
+
+    #     self.current_frame_index += 1
+    #     return (
+    #         self._get_dst_format(rgb=rgb, src_format='rgb', dst_format=dst_format), 
+    #         self._get_dst_format(rgb=rgb_next, src_format='rgb', dst_format=dst_format)
+    #     )
 
     def close(self):
         self.current_frame_index = 1

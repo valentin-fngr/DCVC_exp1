@@ -20,7 +20,7 @@ from src.utils.video_writer import PNGWriter, YUVWriter
 from src.utils.metrics import calc_psnr, calc_msssim
 from src.transforms.functional import ycbcr444_to_420, ycbcr420_to_444
 from tqdm import tqdm
-from pytorch_msssim import ms_ssim
+# from pytorch_msssim import ms_ssim
 
 
 def parse_args():
@@ -51,6 +51,7 @@ def parse_args():
     parser.add_argument('--decoded_frame_path', type=str, default='decoded_frames')
     parser.add_argument('--output_path', type=str, required=True)
     parser.add_argument('--verbose', type=int, default=0)
+    parser.add_argument('--zero_one', type=str2bool, default=True)
 
     args = parser.parse_args()
     return args
@@ -77,7 +78,7 @@ def run_test(p_frame_net, i_frame_net, args):
     device = next(i_frame_net.parameters()).device
 
     if args['src_type'] == 'png':
-        src_reader = PNGReader(args['src_path'], args['src_width'], args['src_height'])
+        src_reader = PNGReader(args['src_path'], args['src_width'], args['src_height'], args["zero_one"])
     elif args['src_type'] == 'yuv420':
         src_reader = YUVReader(args['src_path'], args['src_width'], args['src_height'])
 
@@ -102,10 +103,12 @@ def run_test(p_frame_net, i_frame_net, args):
 
     start_time = time.time()
     p_frame_number = 0
+    i_frame_number = 0 
     overall_p_encoding_time = 0
     overall_p_decoding_time = 0
     with torch.no_grad():
-        for frame_idx in range(frame_num):
+        next_is_i_frame = True
+        while i_frame_number < src_reader.length - 2:
             frame_start_time = time.time()
             if args['dist_in_yuv420']:
                 y, uv = src_reader.read_one_frame(dst_format="420")
@@ -115,7 +118,7 @@ def run_test(p_frame_net, i_frame_net, args):
                 u = uv[0, :, :]
                 v = uv[1, :, :]
             else:
-                rgb = src_reader.read_one_frame(dst_format="rgb")
+                rgb = src_reader.read_one_frame(next_is_i_frame, dst_format="rgb")
                 x = np_image_to_tensor(rgb)
             x = x.to(device)
             pic_height = x.shape[2]
@@ -134,10 +137,11 @@ def run_test(p_frame_net, i_frame_net, args):
                 mode="replicate",
             )
 
-            bin_path = os.path.join(args['bin_folder'], f"{frame_idx}.bin") \
+            bin_path = os.path.join(args['bin_folder'], f"{src_reader.current_frame_index}.bin") \
                 if write_stream else None
 
-            if frame_idx % gop_size == 0:
+            # if frame_idx % gop_size == 0:
+            if next_is_i_frame:
                 result = i_frame_net.encode_decode(x_padded, args['q_in_ckpt'],
                                                    args['i_frame_q_index'], bin_path,
                                                    pic_height=pic_height, pic_width=pic_width)
@@ -151,18 +155,23 @@ def run_test(p_frame_net, i_frame_net, args):
                 recon_frame = result["x_hat"]
                 frame_types.append(0)
                 bits.append(result["bit"])
+                next_is_i_frame = False
+                i_frame_number += 1
             else:
                 result = p_frame_net.encode_decode(x_padded, dpb, args['q_in_ckpt'],
                                                    args['i_frame_q_index'], bin_path,
                                                    pic_height=pic_height, pic_width=pic_width,
-                                                   frame_idx=frame_idx % 4)
+                                                   frame_idx=1)
                 dpb = result["dpb"]
+                # the current frame
                 recon_frame = dpb["ref_frame"]
                 frame_types.append(1)
                 bits.append(result['bit'])
+                print("Bit at frame ", result['bit'])
                 p_frame_number += 1
                 overall_p_encoding_time += result['encoding_time']
                 overall_p_decoding_time += result['decoding_time']
+                next_is_i_frame = True
 
             recon_frame = recon_frame.clamp_(0, 1)
             x_hat = F.pad(recon_frame, (-padding_l, -padding_r, -padding_t, -padding_b))
@@ -195,6 +204,8 @@ def run_test(p_frame_net, i_frame_net, args):
                 msssims_v.append(ssim_v)
             else:
                 psnr = PSNR(x_hat, x)
+                if next_is_i_frame:
+                    print("psnr ", psnr)
                 if args['calc_ssim']:
                     msssim = ms_ssim(x_hat, x, data_range=1).item()
                 else:
@@ -232,7 +243,7 @@ def run_test(p_frame_net, i_frame_net, args):
                                        psnrs_y, psnrs_u, psnrs_v,
                                        msssims_y, msssims_u, msssims_v)
     else:
-        log_result = generate_log_json(frame_num, frame_pixel_num, test_time,
+        log_result = generate_log_json(args['zero_one'], frame_num, frame_pixel_num, test_time,
                                        frame_types, bits, psnrs, msssims)
     return log_result
 
@@ -402,6 +413,7 @@ def main():
             count_sequences += 1
             for rate_idx in range(rate_num):
                 cur_args = {}
+                cur_args['zero_one'] = args.zero_one
                 cur_args['rate_idx'] = rate_idx
                 cur_args['q_in_ckpt'] = q_in_ckpt
                 cur_args['i_frame_q_index'] = i_frame_q_indexes[rate_idx]
